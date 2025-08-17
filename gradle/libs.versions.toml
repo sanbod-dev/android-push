@@ -19,4 +19,4 @@ okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 
 
 [plugins]
-android-library = { id = "com.android.library", version = "8.1.4" }
+android-library = { id = "com.android.library", version = "8.3.2" }

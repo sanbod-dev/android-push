@@ -14,7 +14,7 @@ public class Config {
     private String baseUrl;
     private String mobileNo;
     private String nationalId;
-    private boolean autoStartService;
+    private boolean autoStartService = true;
 
     private String socketProtocol;
     private String socketAddress;

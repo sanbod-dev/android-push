@@ -3,10 +3,13 @@ package com.sanbod.push;
 import static androidx.core.content.ContextCompat.getSystemService;
 import static androidx.core.content.ContextCompat.startForegroundService;
 
+import static com.sanbod.push.PersistUtil.saveServiceParams;
+
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -90,6 +93,8 @@ public class PushApi {
             throw new IllegalAccessException("Permission not granted");
         }
         if (!ConnectorService.isServiceRunning()) {
+            saveServiceParams(this.context,config);
+//            PersistUtil.getServiceParam(this.context);
             Intent serviceIntent = new Intent(context, ConnectorService.class);
             serviceIntent.putExtra("address", config.getSocketAddress());
             serviceIntent.putExtra("appname", config.getNotifTitle());

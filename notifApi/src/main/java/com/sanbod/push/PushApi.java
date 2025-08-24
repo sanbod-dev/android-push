@@ -1,18 +1,14 @@
 package com.sanbod.push;
 
-import static androidx.core.content.ContextCompat.getSystemService;
-import static androidx.core.content.ContextCompat.startForegroundService;
-
 import static com.sanbod.push.PersistUtil.saveServiceParams;
 
-import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.core.app.NotificationManagerCompat;
 
@@ -93,7 +89,7 @@ public class PushApi {
             throw new IllegalAccessException("Permission not granted");
         }
         if (!ConnectorService.isServiceRunning()) {
-            saveServiceParams(this.context,config);
+            saveServiceParams(this.context, config);
 //            PersistUtil.getServiceParam(this.context);
             Intent serviceIntent = new Intent(context, ConnectorService.class);
             serviceIntent.putExtra("address", config.getSocketAddress());
@@ -197,7 +193,7 @@ public class PushApi {
         executor.shutdown();
     }
 
-    public void verifySmsCode(Context context, String phoneNumber, String nationalId, String smsCode,ActionCallBack<String> callBack) {
+    public void verifySmsCode(Context context, String phoneNumber, String nationalId, String smsCode, ActionCallBack<String> callBack) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         executor.submit(() -> {
@@ -257,6 +253,9 @@ public class PushApi {
                     if (config.isAutoStartService())
                         startService();
 
+                    if (config.isEnableFcm()) {
+                        setupFcmSafe();
+                    }
                     return true;
                 }
             }
@@ -265,6 +264,76 @@ public class PushApi {
         }
         return false;
 
+    }
+
+    private void sendFcmToken(String customerId, String fcm) {
+        RestClient client = getRestClient(10000);
+
+        PreRegisterDto preRegisterDto = new PreRegisterDto();
+        preRegisterDto.setCode("0");
+        preRegisterDto.setDeviceDesc(AuthUtil.getInformation());
+        preRegisterDto.setUuid(AuthUtil.getUUID(context));
+        preRegisterDto.setDeviceType("SDK");
+        preRegisterDto.setNationalId(PersistUtil.getData(context, "NID", "00000"));
+        preRegisterDto.setMobileNo(PersistUtil.getData(context, "MOB", "0912000000"));
+        preRegisterDto.setCustomerId(Long.valueOf(customerId));
+        preRegisterDto.setFcmSubscription(fcm);
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                client.post(
+                        getAddress("updateFcmSubscription"),
+                        JsonUtil.toJson(preRegisterDto).toString(),
+                        new HashMap<>());
+            } catch (Exception e) {
+                Log.w("Net", "updateFcmSubscription failed", e);
+            }
+        });
+
+    }
+
+    private void setupFcmSafe() {
+        try {
+            String token_ = PersistUtil.getData(context, "fcm", "");
+            if (!token_.isEmpty()) {
+                sendFcmToken(PersistUtil.getData(context, "CID"), token_);
+                return;
+            }
+            Class<?> firebaseClass = Class.forName("com.google.firebase.messaging.FirebaseMessaging");
+            Object fcmInstance = firebaseClass.getMethod("getInstance").invoke(null);
+
+
+            Object task = firebaseClass.getMethod("getToken").invoke(fcmInstance);
+
+
+            Class<?> taskClass = Class.forName("com.google.android.gms.tasks.Task");
+            Class<?> onCompleteListenerClass = Class.forName("com.google.android.gms.tasks.OnCompleteListener");
+
+            Object listener = java.lang.reflect.Proxy.newProxyInstance(
+                    onCompleteListenerClass.getClassLoader(),
+                    new Class[]{onCompleteListenerClass},
+                    (proxy, method, args) -> {
+                        if (method.getName().equals("onComplete")) {
+                                Object completedTask = args[0];
+                            Boolean isSuccessful = (Boolean) taskClass.getMethod("isSuccessful").invoke(completedTask);
+                            if (Boolean.TRUE.equals(isSuccessful)) {
+                                String token = (String) taskClass.getMethod("getResult").invoke(completedTask);
+                                System.out.println("FCM token: " + token);
+                                PersistUtil.save(context, "fcm", token);
+                                sendFcmToken(PersistUtil.getData(context, "CID"), token);
+                            }
+                        }
+                        return null;
+                    }
+            );
+
+            task.getClass().getMethod("addOnCompleteListener", onCompleteListenerClass).invoke(task, listener);
+
+        } catch (ClassNotFoundException e) {
+            // FirebaseMessaging dependency وجود نداره، safe ignore
+            System.out.println("FCM not included, skipping FCM setup.");
+        } catch (Exception e) {
+            System.out.println("FCM setup failed, ignoring: " + e.getMessage());
+        }
     }
 
     private void holdConfig(Config config) {

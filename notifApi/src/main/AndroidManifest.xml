@@ -10,9 +10,18 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application tools:targetApi="31">
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="general" />
+
+        <provider
+            android:name="com.sanbod.push.SdkInitProvider"
+            android:authorities="${applicationId}.sanbod.push.initprovider"
+            android:exported="false"
+            android:initOrder="1999999999" />
         <receiver
             android:name="com.sanbod.push.BootReceiver"
             android:enabled="true"
@@ -23,11 +32,17 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
-
         <service
             android:name="com.sanbod.push.service.ConnectorService"
             android:exported="false"
             android:foregroundServiceType="dataSync"/>
+        <service
+            android:name="com.sanbod.push.service.SdkMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

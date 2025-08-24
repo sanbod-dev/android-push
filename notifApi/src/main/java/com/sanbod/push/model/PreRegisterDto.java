@@ -8,6 +8,7 @@ public class PreRegisterDto {
     String code;
     String deviceType;
     String webSubscription;
+    String fcmSubscription;
     Long customerId;
 
     public String getMobileNo() {
@@ -72,5 +73,13 @@ public class PreRegisterDto {
 
     public void setCustomerId(Long customerId) {
         this.customerId = customerId;
+    }
+
+    public String getFcmSubscription() {
+        return fcmSubscription;
+    }
+
+    public void setFcmSubscription(String fcmSubscription) {
+        this.fcmSubscription = fcmSubscription;
     }
 }

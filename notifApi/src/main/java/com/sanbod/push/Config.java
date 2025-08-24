@@ -10,6 +10,8 @@ public class Config {
         WS,
         WSS
     }
+    private boolean enableFcm = false;
+
     private boolean needRegisterUser;
     private String baseUrl;
     private String mobileNo;
@@ -218,5 +220,14 @@ public class Config {
 
     public void setNeedRegisterUser(boolean needRegisterUser) {
         this.needRegisterUser = needRegisterUser;
+    }
+
+    public boolean isEnableFcm() {
+        return enableFcm;
+    }
+
+    public Config setEnableFcm(boolean enableFcm) {
+        this.enableFcm = enableFcm;
+        return this;
     }
 }

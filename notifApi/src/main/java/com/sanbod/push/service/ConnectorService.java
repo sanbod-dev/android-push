@@ -104,7 +104,7 @@ public class ConnectorService extends Service {
             getClassReference();
         } catch (Exception e) {
             Log.d(ConnectorService.class.getName(), "onStartCommand: 3");
-            throw new RuntimeException(e);
+           // throw new RuntimeException(e);
         }
 
         String address = intent.getStringExtra("address");
@@ -257,7 +257,8 @@ public class ConnectorService extends Service {
                     JSONObject j = new JSONObject(text);
                     if (j.get("type") != null) {
                         notifyApp(j.get("channel").toString(), j.get("message").toString());
-                        showTelegramStyleNotification(j.get("channel").toString(), j.get("message").toString());
+                        if (j.getBoolean("showNotif"))
+                            showTelegramStyleNotification(j.get("channel").toString(), j.get("message").toString());
                     }
                     webSocket.send("OK");
                 } catch (JSONException e) {

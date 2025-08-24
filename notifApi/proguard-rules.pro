@@ -18,3 +18,5 @@
 # اگر از Gson استفاده می‌کنی
 -keep class com.google.gson.** { *; }
 -keep class your.model.package.** { *; }
+
+-dontwarn com.google.android.gms.cloudmessaging.Rpc

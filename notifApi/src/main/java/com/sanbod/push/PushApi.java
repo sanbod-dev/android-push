@@ -1,5 +1,7 @@
 package com.sanbod.push;
 
+import static com.sanbod.push.utils.RestClientUtil.getAddress;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -96,9 +98,9 @@ public class PushApi {
                 RestClientUtil client = getRestClient(10000);
                 HashMap<String, String> map = new HashMap<>();
                 map = (HashMap<String, String>) AuthUtil.addJwtTokenHeader(map, PersistUtil.getData(context, "JWT"));
-                String resultx = client.post(getAddress("getNotifications") + "?page=" + page + "&size=" + size, null, map);
-                ResponseModel responseModel = JsonUtil.fromJson(resultx, ResponseModel.class);
-                JSONObject jsonObject = new JSONObject(responseModel.getData().toString());
+                String resultx = client.post(getAddress(config,"getNotifications") + "?page=" + page + "&size=" + size, null, map);
+                ResponseModel<String> responseModel = JsonUtil.fromJson(resultx, JsonUtil.parameterizedType(ResponseModel.class,String.class));
+                JSONObject jsonObject = new JSONObject(responseModel.getData());
                 JSONArray j = ((JSONArray) jsonObject.get("content"));
                 List<SanbodNotification> d = new ArrayList<>();
                 for (int i = 0; i < j.length(); i++) {
@@ -149,7 +151,7 @@ public class PushApi {
             preRegisterDto.setNationalId(nationalId);
             preRegisterDto.setMobileNo(phoneNumber);
             try {
-                String reslt = client.post(getAddress("pre-register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
+                String reslt = client.post(getAddress(config,"pre-register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
                 ResponseModel r = JsonUtil.fromJson(reslt, ResponseModel.class);
                 PersistUtil.save(context, "PK", r.getMessage());
                 if (callBack != null) {
@@ -181,7 +183,7 @@ public class PushApi {
             preRegisterDto.setNationalId(nationalId);
             preRegisterDto.setMobileNo(phoneNumber);
             try {
-                String reslt2 = client.post(getAddress("register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
+                String reslt2 = client.post(getAddress(config,"register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
                 ResponseModel r2 = JsonUtil.fromJson(reslt2, ResponseModel.class);
                 Customer c = JsonUtil.fromJson(r2.getData().toString(), Customer.class);
                 PersistUtil.save(context, "CID", c.getId().toString());
@@ -256,7 +258,7 @@ public class PushApi {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 client.post(
-                        getAddress("updateFcmSubscription"),
+                        getAddress(config,"updateFcmSubscription"),
                         JsonUtil.toJson(preRegisterDto).toString(),
                         new HashMap<>());
             } catch (Exception e) {
@@ -340,7 +342,7 @@ public class PushApi {
         customer.setNationalId(PersistUtil.getData(context, "NID"));
         customer.setMobile(PersistUtil.getData(context, "MOB"));
         try {
-            String reslt = client.post(getAddress("login"), JsonUtil.toJson(customer).toString(), new HashMap<>());
+            String reslt = client.post(getAddress(config,"login"), JsonUtil.toJson(customer).toString(), new HashMap<>());
             LoginRes loginRes = JsonUtil.fromJson(reslt, LoginRes.class);
             PersistUtil.save(context, "JWT", loginRes.getToken());
         } catch (IOException e) {
@@ -371,10 +373,10 @@ public class PushApi {
         preRegisterDto.setMobileNo(PersistUtil.getData(context, "MOB", "0912000000"));
 
         try {
-            String reslt = client.post(getAddress("pre-register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
+            String reslt = client.post(getAddress(config,"pre-register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
             ResponseModel r = JsonUtil.fromJson(reslt, ResponseModel.class);
             PersistUtil.save(context, "PK", r.getMessage());
-            String reslt2 = client.post(getAddress("register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
+            String reslt2 = client.post(getAddress(config,"register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
             ResponseModel<Customer> r2 = JsonUtil.fromJson(reslt2,JsonUtil.parameterizedType(ResponseModel.class,Customer.class));
 //            Customer c = JsonUtil.fromJson(r2.getData().toString(), Customer.class);
             Customer c = r2.getData();
@@ -395,9 +397,6 @@ public class PushApi {
         }
     }
 
-    private String getAddress(String method) {
-        return config.getBaseUrl() + method;
-    }
 
     public Context getContext() {
         return context;

@@ -6,7 +6,9 @@ public class ResponseModelNotification {
     long id;
     int code;
     List<SanbodNotification> data;
-
+    private long totalElements;
+    private int totalPages;
+    private String message;
     public long getId() {
         return id;
     }
@@ -29,5 +31,29 @@ public class ResponseModelNotification {
 
     public void setData(List<SanbodNotification> data) {
         this.data = data;
+    }
+
+    public long getTotalElements() {
+        return totalElements;
+    }
+
+    public void setTotalElements(long totalElements) {
+        this.totalElements = totalElements;
+    }
+
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    public void setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

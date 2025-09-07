@@ -37,7 +37,7 @@ public class Config {
     private int customNotifViewChannelId;
     private int customNotifViewMessageId;
     private String eventNameForNewNotification;
-    private ConnectorModeEnum connectionMode;
+    private ConnectorModeEnum connectionMode = ConnectorModeEnum.FOREGROUND;
 
     public Config() {
     }

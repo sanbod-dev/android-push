@@ -5,11 +5,17 @@ import android.app.Activity;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.LayoutRes;
 
+import com.sanbod.push.connectors.ConnectorModeEnum;
+
 public class Config {
+
+
     public enum SocketProtocolEnum {
         WS,
         WSS
     }
+
+
     private boolean enableFcm = false;
 
     private boolean needRegisterUser;
@@ -31,7 +37,7 @@ public class Config {
     private int customNotifViewChannelId;
     private int customNotifViewMessageId;
     private String eventNameForNewNotification;
-
+    private ConnectorModeEnum connectionMode;
 
     public Config() {
     }
@@ -229,5 +235,12 @@ public class Config {
     public Config setEnableFcm(boolean enableFcm) {
         this.enableFcm = enableFcm;
         return this;
+    }
+    public Config setConnectionMode(ConnectorModeEnum connectionMode) {
+        this.connectionMode = connectionMode;
+        return this;
+    }
+    public ConnectorModeEnum getConnectionMode(){
+        return this.connectionMode;
     }
 }

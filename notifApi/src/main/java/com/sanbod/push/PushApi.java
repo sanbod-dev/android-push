@@ -1,24 +1,25 @@
 package com.sanbod.push;
 
-import static com.sanbod.push.PersistUtil.saveServiceParams;
-
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
 import androidx.core.app.NotificationManagerCompat;
 
+import com.sanbod.push.callback.ActionCallBack;
+import com.sanbod.push.connectors.ConnectorFactory;
 import com.sanbod.push.model.Customer;
 import com.sanbod.push.model.LoginRes;
 import com.sanbod.push.model.SanbodNotification;
 import com.sanbod.push.model.Page;
 import com.sanbod.push.model.PreRegisterDto;
 import com.sanbod.push.model.ResponseModel;
-import com.sanbod.push.service.ConnectorService;
+import com.sanbod.push.utils.AuthUtil;
+import com.sanbod.push.utils.JsonUtil;
+import com.sanbod.push.utils.NotificationUtil;
+import com.sanbod.push.utils.PersistUtil;
+import com.sanbod.push.utils.RestClientUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -81,33 +82,7 @@ public class PushApi {
     }
 
     public void startService() throws JSONException, IllegalAccessException {
-        boolean permissionGranted = true;
-        for (String s : SdkPermissions.RUNTIME_PERMISSIONS) {
-            permissionGranted &= SdkPermissionUtil.isPermissionGranted(context, s);
-        }
-        if (!permissionGranted) {
-            throw new IllegalAccessException("Permission not granted");
-        }
-        if (!ConnectorService.isServiceRunning()) {
-            saveServiceParams(this.context, config);
-//            PersistUtil.getServiceParam(this.context);
-            Intent serviceIntent = new Intent(context, ConnectorService.class);
-            serviceIntent.putExtra("address", config.getSocketAddress());
-            serviceIntent.putExtra("appname", config.getNotifTitle());
-            serviceIntent.putExtra("customerId", PersistUtil.getData(context, "CID"));
-            serviceIntent.putExtra("mobileNo", PersistUtil.getData(context, "MOB"));
-            serviceIntent.putExtra("uuid", AuthUtil.getUUID(context));
-            serviceIntent.putExtra("wsprotocol", config.getSocketProtocol());
-            serviceIntent.putExtra("config", JsonUtil.toJson(config).toString());
-            ComponentName componentName;
-            if (Build.VERSION.SDK_INT >= 26) {
-                componentName = context.startForegroundService(serviceIntent);
-            } else {
-                // Pre-O behavior.
-                componentName = context.startService(serviceIntent);
-            }
-            System.out.print(componentName);
-        }
+        ConnectorFactory.create(context,config.getConnectionMode()).connect(config);
     }
 
     public void getNotifications(int page, int size, ActionCallBack<Page<SanbodNotification>> callBack) {
@@ -118,7 +93,7 @@ public class PushApi {
             Exception exp = null;
 
             try {
-                RestClient client = getRestClient(10000);
+                RestClientUtil client = getRestClient(10000);
                 HashMap<String, String> map = new HashMap<>();
                 map = (HashMap<String, String>) AuthUtil.addJwtTokenHeader(map, PersistUtil.getData(context, "JWT"));
                 String resultx = client.post(getAddress("getNotifications") + "?page=" + page + "&size=" + size, null, map);
@@ -166,7 +141,7 @@ public class PushApi {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         executor.submit(() -> {
-            RestClient client = getRestClient(10000);
+            RestClientUtil client = getRestClient(10000);
             PreRegisterDto preRegisterDto = new PreRegisterDto();
             preRegisterDto.setDeviceDesc(AuthUtil.getInformation());
             preRegisterDto.setUuid(AuthUtil.getUUID(context));
@@ -197,7 +172,7 @@ public class PushApi {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         executor.submit(() -> {
-            RestClient client = getRestClient(10000);
+            RestClientUtil client = getRestClient(10000);
             PreRegisterDto preRegisterDto = new PreRegisterDto();
             preRegisterDto.setDeviceDesc(AuthUtil.getInformation());
             preRegisterDto.setCode(smsCode);
@@ -231,8 +206,8 @@ public class PushApi {
     }
 
 
-    private RestClient getRestClient(int timeout) {
-        return new RestClient(timeout, timeout);
+    private RestClientUtil getRestClient(int timeout) {
+        return new RestClientUtil(timeout, timeout);
     }
 
     private PushApi() {
@@ -243,13 +218,13 @@ public class PushApi {
             initializing = true;
             holdContext(context);
             holdConfig(config);
+            NotificationUtil.notificationManager = NotificationManagerCompat.from(context);
+
             if (!config.isNeedRegisterUser()) {
                 if (!initilized) {
-                    notificationManager = NotificationManagerCompat.from(context);
                     getToken();
                     initilized = true;
                     login();
-
                     if (config.isAutoStartService())
                         startService();
 
@@ -267,7 +242,7 @@ public class PushApi {
     }
 
     private void sendFcmToken(String customerId, String fcm) {
-        RestClient client = getRestClient(10000);
+        RestClientUtil client = getRestClient(10000);
 
         PreRegisterDto preRegisterDto = new PreRegisterDto();
         preRegisterDto.setCode("0");
@@ -345,10 +320,20 @@ public class PushApi {
             PersistUtil.save(context, "MOB", config.getMobileNo());
             PersistUtil.save(context, "NID", config.getNationalId());
         }
+        if (config.getNotifSmallIcon() != 0){
+            PersistUtil.save(context, "PUSHER_SDK_ICON", config.getNotifSmallIcon());
+        }
+        try {
+            PersistUtil.saveServiceParams(context,config);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void login() {
-        RestClient client = getRestClient(10000);
+        RestClientUtil client = getRestClient(10000);
         Customer customer = new Customer();
         customer.setId(Long.valueOf(PersistUtil.getData(context, "CID")));
         customer.setPassword(AuthUtil.getUUID(context) + PersistUtil.getData(context, "PWD"));
@@ -376,7 +361,7 @@ public class PushApi {
     }
 
     private void getToken() {
-        RestClient client = getRestClient(10000);
+        RestClientUtil client = getRestClient(10000);
         PreRegisterDto preRegisterDto = new PreRegisterDto();
         preRegisterDto.setCode("0");
         preRegisterDto.setDeviceDesc(AuthUtil.getInformation());
@@ -390,8 +375,10 @@ public class PushApi {
             ResponseModel r = JsonUtil.fromJson(reslt, ResponseModel.class);
             PersistUtil.save(context, "PK", r.getMessage());
             String reslt2 = client.post(getAddress("register"), JsonUtil.toJson(preRegisterDto).toString(), new HashMap<>());
-            ResponseModel r2 = JsonUtil.fromJson(reslt2, ResponseModel.class);
-            Customer c = JsonUtil.fromJson(r2.getData().toString(), Customer.class);
+            ResponseModel<Customer> r2 = JsonUtil.fromJson(reslt2,JsonUtil.parameterizedType(ResponseModel.class,Customer.class));
+//            Customer c = JsonUtil.fromJson(r2.getData().toString(), Customer.class);
+            Customer c = r2.getData();
+            ResponseModel<Customer> rx = JsonUtil.fromJson(reslt2, ResponseModel.class);
             PersistUtil.save(context, "CID", c.getId().toString());
             PersistUtil.save(context, "PWD", c.getPassword());
             PersistUtil.save(context, "NID", c.getNationalId());
@@ -412,4 +399,7 @@ public class PushApi {
         return config.getBaseUrl() + method;
     }
 
+    public Context getContext() {
+        return context;
+    }
 }

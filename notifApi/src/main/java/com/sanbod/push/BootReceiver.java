@@ -7,21 +7,17 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
-import com.sanbod.push.service.ConnectorService;
+import com.sanbod.push.connectors.ConnectorModeEnum;
+import com.sanbod.push.service.SocketService;
+import com.sanbod.push.utils.AuthUtil;
+import com.sanbod.push.utils.JsonUtil;
+import com.sanbod.push.utils.PersistUtil;
 
-/**
- * BootReceiver مقاوم:
- * - قبل از آنلاک: اگر "حداقل پارامترها" در Device Protected Storage موجود باشد، سرویس را بالا می‌آورد.
- * - بعد از آنلاک: نیز سرویس را بالا می‌آورد (از همان DP Storage می‌خواند).
- * <p>
- * توجه: ذخیره‌سازی "boot_params" باید در اولین اجرای موفق اپ/سرویس انجام شده باشد.
- */
+
 public class BootReceiver extends BroadcastReceiver {
     private static final String TAG = "BootReceiver";
-    // نام فایل SharedPreferences در Device Protected Storage
     private static final String BOOT_PREF_FILE = "boot_params";
 
-    // کلیدهای مورد نیاز برای راه‌اندازی سرویس
     private static final String K_ADDRESS = "address";      // e.g. "push-server.example.com/push"
     private static final String K_WSPROTOCOL = "wsprotocol";   // "WS" | "WSS"
     private static final String K_CUSTOMER_ID = "customerId";   // CID
@@ -35,7 +31,6 @@ public class BootReceiver extends BroadcastReceiver {
         final String action = intent != null ? intent.getAction() : null;
         Log.d(TAG, "onReceive: " + action);
 
-        // به Device Protected Storage سوییچ می‌کنیم تا قبل از آنلاک هم بتوانیم بخوانیم
         Context dp = null;
         SharedPreferences boot = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -50,7 +45,6 @@ public class BootReceiver extends BroadcastReceiver {
         final boolean hasMinimal = hasMinimalParams(boot);
 
         if (Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action)) {
-            // قبل از آنلاک فقط وقتی استارت کن که پارامترهای حداقلی را داریم
             if (!hasMinimal) {
                 Log.w(TAG, "LOCKED_BOOT_COMPLETED: minimal params missing; will wait for BOOT_COMPLETED.");
                 return;
@@ -60,8 +54,6 @@ public class BootReceiver extends BroadcastReceiver {
         }
 
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
-            // بعد از آنلاک: اگر پارامترها موجودند استارت کن؛
-            // اگر موجود نیست، معمولاً یعنی هنوز یک‌بار startService در زمان روشن بودن اپ انجام نشده
             if (!hasMinimal) {
                 Log.e(TAG, "BOOT_COMPLETED: minimal params missing. Did you persist them on first app run?");
                 return;
@@ -95,7 +87,7 @@ public class BootReceiver extends BroadcastReceiver {
                 return;
             }
 
-            Intent svc = new Intent(context, ConnectorService.class);
+            Intent svc = new Intent(context, SocketService.class);
 
             svc.putExtra("address", config.getSocketAddress());
             svc.putExtra("appname", config.getNotifTitle());
@@ -107,11 +99,12 @@ public class BootReceiver extends BroadcastReceiver {
             Log.i(TAG, "Starting ConnectorService from " + source
                     + " (addr=" + address + ", proto=" + wsProtocol + ")");
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(svc);
-            } else {
-                context.startService(svc);
-            }
+            if (config.getConnectionMode() == ConnectorModeEnum.FOREGROUND)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(svc);
+                } else {
+                    context.startService(svc);
+                }
         } catch (Throwable t) {
             Log.e(TAG, "Failed to start ConnectorService from " + source, t);
         }

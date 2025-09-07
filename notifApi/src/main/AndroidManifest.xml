@@ -33,7 +33,7 @@
             </intent-filter>
         </receiver>
         <service
-            android:name="com.sanbod.push.service.ConnectorService"
+            android:name="com.sanbod.push.service.SocketService"
             android:exported="false"
             android:foregroundServiceType="dataSync"/>
         <service

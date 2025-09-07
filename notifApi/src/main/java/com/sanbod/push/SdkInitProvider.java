@@ -28,7 +28,6 @@ public final class SdkInitProvider extends ContentProvider {
         return true; // init OK
     }
 
-    // بقیه متدها لازم نیست استفاده شوند
     @Override public Cursor query(Uri uri, String[] p, String s, String[] a, String o){ return null; }
     @Override public String getType(Uri uri){ return null; }
     @Override public Uri insert(Uri uri, ContentValues v){ return null; }

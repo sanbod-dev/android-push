@@ -12,6 +12,8 @@ import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.sanbod.push.callback.SdkPermissionCallback;
+
 import java.util.ArrayList;
 import java.util.List;
 

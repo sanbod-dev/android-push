@@ -40,12 +40,14 @@ dependencies {
 publishing {
     publications {
         release(MavenPublication) {
-            afterEvaluate {
-                from components.release
-            }
             groupId = 'com.github.sanbod-dev'
             artifactId = 'android-push'
             version = 'v1.0.0'
+
+            afterEvaluate {
+                // وصل کردن AAR به publication
+                artifact("$buildDir/outputs/aar/${project.name}-release.aar")
+            }
         }
     }
 }

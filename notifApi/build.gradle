@@ -47,6 +47,7 @@ publishing {
             afterEvaluate {
                 // وصل کردن AAR به publication
                 artifact("$buildDir/outputs/aar/${project.name}-release.aar")
+//                from components.release
             }
         }
     }

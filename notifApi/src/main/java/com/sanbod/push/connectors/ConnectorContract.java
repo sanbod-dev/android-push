@@ -14,4 +14,6 @@ public abstract class ConnectorContract {
     }
 
     public abstract boolean connect(Config config) throws IllegalAccessException, JSONException;
+
+    public abstract void disconnect();
 }

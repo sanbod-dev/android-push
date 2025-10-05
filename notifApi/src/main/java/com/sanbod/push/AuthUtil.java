@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.Build;
 import android.provider.Settings;
 
+import com.sanbod.push.utils.PersistUtil;
+
 import java.util.Map;
 import java.util.UUID;
 

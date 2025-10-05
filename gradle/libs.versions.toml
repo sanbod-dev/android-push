@@ -21,4 +21,4 @@ firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging
 
 
 [plugins]
-android-library = { id = "com.android.library", version = "8.3.2" }
+android-library = { id = "com.android.library", version = "7.4.2" }

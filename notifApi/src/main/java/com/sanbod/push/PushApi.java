@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PushApi {
+    public static final String VERSION = "1.0.27";
     static PushApi pushApi_;
     NotificationManagerCompat notificationManager;
     boolean initilized = false;

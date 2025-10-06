@@ -2,7 +2,6 @@ package com.sanbod.push.utils;
 
 import android.content.Intent;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.sanbod.push.Config;
 import com.sanbod.push.PushApi;
@@ -13,7 +12,8 @@ public class NotifyListUpdateUtil {
             Intent eventIntent = new Intent(config.getEventNameForNewNotification());
             eventIntent.putExtra("channel", channel);
             eventIntent.putExtra("message", message);
-            LocalBroadcastManager.getInstance(PushApi.get().getContext()).sendBroadcast(eventIntent);
+//            LocalBroadcastManager.getInstance(PushApi.get().getContext()).sendBroadcast(eventIntent);
+            IntentMessageBus.getInstance().sendMessage(eventIntent);
         }
     }
 }

@@ -25,16 +25,14 @@ android {
 
 dependencies {
     implementation libs.appcompat
-    implementation libs.material
     api 'com.squareup.okhttp3:okhttp:4.11.0'
-    implementation libs.core
     implementation "androidx.security:security-crypto:1.1.0-alpha06"
-    testImplementation libs.junit
-    androidTestImplementation libs.ext.junit
-    androidTestImplementation libs.espresso.core
     compileOnly libs.firebase.messaging
-    implementation "androidx.lifecycle:lifecycle-process:2.8.0"
-    implementation "androidx.work:work-runtime:2.9.0"
+    implementation "androidx.lifecycle:lifecycle-process:2.5.1"
+    implementation "androidx.lifecycle:lifecycle-common:2.5.1"
+    implementation "androidx.work:work-runtime:2.8.1"
+//    implementation "androidx.localbroadcastmanager:localbroadcastmanager:1.1.0"
+
 }
 
 publishing {
@@ -51,4 +49,14 @@ publishing {
             }
         }
     }
+}
+android.libraryVariants.all { variant ->
+    def name = variant.buildType.name
+    if (name.equals(com.android.builder.core.BuilderConstants.DEBUG)) {
+        return; // Skip debug builds.
+    }
+    def task = project.tasks.create "jar${name.capitalize()}", Jar
+    task.dependsOn variant.javaCompile
+    task.from variant.javaCompile.destinationDir
+    artifacts.add('archives', task);
 }

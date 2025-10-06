@@ -16,10 +16,10 @@ import android.widget.RemoteViews;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.sanbod.push.Config;
 import com.sanbod.push.JsonUtil;
+import com.sanbod.push.utils.IntentMessageBus;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -299,7 +299,8 @@ public class ConnectorService extends Service {
             Intent eventIntent = new Intent(config.getEventNameForNewNotification());
             eventIntent.putExtra("channel", channel);
             eventIntent.putExtra("message", message);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(eventIntent);
+//            LocalBroadcastManager.getInstance(this).sendBroadcast(eventIntent);
+            IntentMessageBus.getInstance().sendMessage(eventIntent);
         }
     }
 

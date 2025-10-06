@@ -4,6 +4,7 @@ alias(libs.plugins.android.library) apply false
 }
 // In your top-level build.gradle or your library module’s build.gradle
 allprojects {
+
     configurations.all {
         resolutionStrategy {
             force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
